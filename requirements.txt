@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+langgraph
+torch
+torchvision
+pandas
+pillow

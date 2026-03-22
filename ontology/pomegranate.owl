@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.pomeguard.org/ontology/pomegranate#"
+     xml:base="http://www.pomeguard.org/ontology/pomegranate"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    
+    <owl:Ontology rdf:about="http://www.pomeguard.org/ontology/pomegranate">
+        <rdfs:comment>An ontology for the PomeGuard Multi-Agent System (Bhagwa cultivar).</rdfs:comment>
+    </owl:Ontology>
+    
+    <!-- Object Properties -->
+    <owl:ObjectProperty rdf:about="#affects_chemical_level">
+        <rdfs:domain rdf:resource="#Disease"/>
+        <rdfs:range rdf:resource="#Phytochemical"/>
+    </owl:ObjectProperty>
+    
+    <!-- Classes -->
+    <owl:Class rdf:about="#FruitPart"/>
+    
+    <owl:Class rdf:about="#Disease"/>
+    
+    <owl:Class rdf:about="#Phytochemical"/>
+    
+    <!-- Phytochemical Instances/Subclasses -->
+    <owl:Class rdf:about="#Punicalagin">
+        <rdfs:subClassOf rdf:resource="#Phytochemical"/>
+        <rdfs:comment>Measured in mg/100g.</rdfs:comment>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#VitaminC">
+        <rdfs:subClassOf rdf:resource="#Phytochemical"/>
+        <rdfs:comment>Measured in mg/100g.</rdfs:comment>
+    </owl:Class>
+    
+    <!-- Disease Instances/Subclasses -->
+    <owl:Class rdf:about="#Blight">
+        <rdfs:subClassOf rdf:resource="#Disease"/>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#Anthracnose">
+        <rdfs:subClassOf rdf:resource="#Disease"/>
+    </owl:Class>
+    
+    <owl:Class rdf:about="#Healthy">
+        <rdfs:subClassOf rdf:resource="#Disease"/>
+    </owl:Class>
+</rdf:RDF>

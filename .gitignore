@@ -1,0 +1,16 @@
+﻿./Pomegranate Diseases Dataset
+
+# Python Environments
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+# IDEs
+.vscode/
+.idea/
+# Data and Weights
+Pomegranate Diseases Dataset/
+models/*.pth
+*.pt
+node_modules
