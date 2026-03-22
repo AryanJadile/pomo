@@ -398,7 +398,6 @@ The frontend interface for PomeGuard is built using real-time data flow with Rea
 ![Landing Page](assets/screenshots/landing.png)
 ![Analyse Page](assets/screenshots/analyse.png)
 ![Dashboard](assets/screenshots/dashboard.png)
-![How It Works](assets/screenshots/how-it-works.png)
 
 **Key UI Components:**
 - **ImageUploader:** Drag-and-drop zone with instant local preview and progressive upload states.
