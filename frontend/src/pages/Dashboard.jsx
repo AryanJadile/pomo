@@ -26,9 +26,15 @@ export default function Dashboard() {
     fetchHistory()
   }, [])
 
-  const healthyFruits = history.filter((h) => h.disease === "Healthy").length;
+  const healthyFruits = history.filter((h) => (h.result?.disease || "") === "Healthy").length;
   const healthRatio = history.length ? Math.round((healthyFruits / history.length) * 100) : 0;
-  const avgScore = history.length ? Math.round(history.reduce((acc, curr) => acc + curr.score, 0) / history.length) : 0;
+  const avgScore = history.length ? Math.round(history.reduce((acc, curr) => acc + (curr.result?.nutrition?.nutritional_score || 0), 0) / history.length) : 0;
+  
+  // Format history for chart
+  const chartData = history.map(h => ({
+    date: new Date(h.created_at).toLocaleDateString(),
+    score: h.result?.nutrition?.nutritional_score || 0
+  })).reverse();
 
   return (
     <div className="container py-8 space-y-8 animate-in fade-in duration-500">
@@ -66,7 +72,7 @@ export default function Dashboard() {
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">Loading chart...</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={history} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
@@ -113,19 +119,26 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {history.map((item) => (
-                  <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">{item.date}</td>
-                    <td className="px-4 py-3 font-medium text-foreground">{item.disease.replace(/_/g, " ")}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={item.severity === "None" ? "success" : item.severity === "Severe" ? "destructive" : "warning"}>
-                        {item.severity}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-foreground">{item.score}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{item.status}</td>
-                  </tr>
-                ))}
+                {history.map((item) => {
+                  const disease = item.result?.disease || "Unknown";
+                  const severity = item.result?.severity || "None";
+                  const score = item.result?.nutrition?.nutritional_score || 0;
+                  const date = new Date(item.created_at).toLocaleDateString();
+                  
+                  return (
+                    <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">{date}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{disease.replace(/_/g, " ")}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={severity === "None" ? "success" : severity === "Severe" ? "destructive" : "warning"}>
+                          {severity}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-foreground">{score}</td>
+                      <td className="px-4 py-3 text-muted-foreground cursor-pointer hover:underline" onClick={() => window.location.href=`/scan/${item.id}`}>View Analysis</td>
+                    </tr>
+                  )
+                })}
                 {history.length === 0 && !loading && (
                   <tr>
                     <td colSpan="5" className="text-center py-8 text-muted-foreground">No analyses found.</td>

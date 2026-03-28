@@ -1,15 +1,18 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { UploadCloud, CheckCircle2, Download, RefreshCw, Leaf, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
-import { classifyFruit, submitEnvMetadata, runOntologyInference } from "@/services/api"
+import { classifyFruit, submitEnvMetadata, runOntologyInference, uploadMedia, saveScan } from "@/services/api"
+import { toast } from "sonner"
 
 export default function Analyse() {
   const [imageFile, setImageFile] = useState(null)
   const [preview, setPreview] = useState(null)
+  const [mediaInfo, setMediaInfo] = useState(null)
+  const navigate = useNavigate()
   
   const [isClassifying, setIsClassifying] = useState(false)
   const [diseaseData, setDiseaseData] = useState(null)
@@ -72,10 +75,14 @@ export default function Analyse() {
     
     setIsClassifying(true)
     try {
+      const uploadRes = await uploadMedia(file)
+      setMediaInfo(uploadRes)
+      
       const result = await classifyFruit(file)
       setDiseaseData(result)
     } catch (err) {
       console.error(err)
+      toast.error("Failed to process or upload image.")
     } finally {
       setIsClassifying(false)
     }
@@ -99,17 +106,39 @@ export default function Analyse() {
   }
 
   const handleFullAnalysis = async () => {
-    if (!diseaseData || !envData) return
+    if (!diseaseData || !envData || !mediaInfo) return
     setIsInferring(true)
     try {
-      const result = await runOntologyInference({
+      const nutritionRes = await runOntologyInference({
         disease: diseaseData.disease,
         severity: diseaseData.severity,
         stress_factors: envData.stress_factors,
       })
-      setNutritionData(result)
+      setNutritionData(nutritionRes)
+      
+      const fullResult = {
+        disease: diseaseData.disease,
+        severity: diseaseData.severity,
+        nutrition: nutritionRes,
+        environment: envData
+      }
+      
+      const savedScan = await saveScan({
+        scan_type: "disease_detection",
+        media_url: mediaInfo.url,
+        public_id: mediaInfo.publicId,
+        media_type: mediaInfo.mediaType,
+        input_data: envParams,
+        result: fullResult,
+        confidence_score: diseaseData.confidence
+      })
+      
+      toast.success("Analysis complete and saved.")
+      setTimeout(() => navigate(`/history`), 2000)
+      
     } catch (err) {
       console.error(err)
+      toast.error("Failed to run pipeline or save.")
     } finally {
       setIsInferring(false)
     }
