@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { UploadCloud, CheckCircle2, Download, RefreshCw, Leaf } from "lucide-react"
+import { UploadCloud, CheckCircle2, Download, RefreshCw, Leaf, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,49 @@ export default function Analyse() {
 
   const [isInferring, setIsInferring] = useState(false)
   const [nutritionData, setNutritionData] = useState(null)
+
+  const [isFetchingWeather, setIsFetchingWeather] = useState(false)
+  const [weatherError, setWeatherError] = useState(null)
+
+  const autoFetchWeather = () => {
+    setIsFetchingWeather(true)
+    setWeatherError(null)
+
+    if (!navigator.geolocation) {
+      setWeatherError("Geolocation is not supported by your browser")
+      setIsFetchingWeather(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m&timezone=auto`)
+          const data = await res.json()
+          
+          if (data?.current) {
+            setEnvParams(prev => ({
+              ...prev,
+              temperature: data.current.temperature_2m,
+              humidity: data.current.relative_humidity_2m,
+            }))
+          } else {
+            setWeatherError("Failed to parse weather data")
+          }
+        } catch (err) {
+          setWeatherError("Failed to fetch weather data")
+          console.error(err)
+        } finally {
+          setIsFetchingWeather(false)
+        }
+      },
+      (error) => {
+        setWeatherError("Location access denied or unavailable.")
+        setIsFetchingWeather(false)
+      }
+    )
+  }
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -130,6 +173,14 @@ export default function Analyse() {
             <CardHeader className="pb-3"><CardTitle>2. Environmental Metadata</CardTitle></CardHeader>
             <CardContent>
               <form onSubmit={handleEnvSubmit} className="space-y-5">
+                <div className="flex justify-between items-center bg-muted/40 p-2.5 rounded-lg border border-border/50">
+                  <span className="text-xs font-medium text-muted-foreground hidden sm:inline-block">Provide inputs or auto-detect location weather.</span>
+                  <Button type="button" variant="outline" size="sm" onClick={autoFetchWeather} disabled={isFetchingWeather} className="h-7 w-full sm:w-auto sm:ml-auto gap-1.5 bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary transition-all rounded-full px-3 shrink-0">
+                    {isFetchingWeather ? <RefreshCw className="h-3 w-3 animate-spin" /> : <MapPin className="h-3 w-3" />}
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{isFetchingWeather ? "Detecting..." : "Auto-Detect"}</span>
+                  </Button>
+                </div>
+                {weatherError && <p className="text-destructive text-xs font-medium px-1 mt-1 -mb-2">{weatherError}</p>}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">UV (W/m²)</label>
