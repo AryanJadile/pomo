@@ -37,4 +37,14 @@ export const useAppStore = create((set) => ({
   // History state
   history: [],
   setHistory: (history) => set({ history }),
+
+  // Notification state
+  notifications: [],
+  setNotifications: (notifications) => set({ notifications }),
+  markNotificationRead: (id) => set((state) => ({
+    notifications: state.notifications.map((n) => n.id === id ? { ...n, read: true } : n)
+  })),
+  unreadNotificationsCount: () => set((state) => {
+    // This is a derived state helper, usually we'd just use a selector but keeping simple here
+  })
 }));

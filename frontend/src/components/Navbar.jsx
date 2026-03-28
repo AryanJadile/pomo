@@ -1,11 +1,53 @@
 import { Link, useLocation } from "react-router-dom"
+import { useEffect, useState, useRef } from "react"
 import { useAppStore } from "@/store/useAppStore"
-import { Moon, Sun, Menu } from "lucide-react"
+import { Moon, Sun, Menu, Bell, CheckCircle2 } from "lucide-react"
 import { Button } from "./ui/button"
+import { getNotifications, markNotificationAsRead } from "@/services/api"
+import { toast } from "sonner"
 
 export default function Navbar() {
-  const { theme, toggleTheme } = useAppStore()
+  const { theme, toggleTheme, notifications, setNotifications, markNotificationRead } = useAppStore()
   const location = useLocation()
+  const [showNotifications, setShowNotifications] = useState(false)
+  const lastUnreadCount = useRef(0)
+
+  useEffect(() => {
+    const fetchNotifs = async () => {
+      try {
+        const data = await getNotifications()
+        setNotifications(data)
+        const unreads = data.filter(n => !n.read)
+        
+        if (unreads.length > lastUnreadCount.current) {
+          const newest = unreads[0]
+          if (newest) {
+            toast(newest.type === 'disease_alert' ? "Disease Alert" : "Environmental Alert", {
+              description: newest.message,
+              icon: <Bell className="h-4 w-4" />,
+            })
+          }
+        }
+        lastUnreadCount.current = unreads.length
+      } catch (error) {
+        console.error("Failed to fetch notifications", error)
+      }
+    }
+    fetchNotifs()
+    const interval = setInterval(fetchNotifs, 5000)
+    return () => clearInterval(interval)
+  }, [setNotifications])
+
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await markNotificationAsRead(id)
+      markNotificationRead(id)
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const links = [
     { name: "Home", path: "/" },
@@ -40,6 +82,46 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center space-x-3">
+          <div className="relative">
+            <Button variant="ghost" size="icon" onClick={() => setShowNotifications(!showNotifications)}>
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-destructive border border-background"></span>
+              )}
+            </Button>
+            
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-background border rounded-md shadow-lg overflow-hidden z-50">
+                <div className="p-3 border-b bg-muted/50 flex justify-between items-center">
+                  <h3 className="font-semibold text-sm">Notifications</h3>
+                  <span className="text-xs text-muted-foreground">{unreadCount} unread</span>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-muted-foreground">No notifications yet</div>
+                  ) : (
+                    notifications.map(notification => (
+                      <div key={notification.id} className={`p-4 border-b text-sm transition-colors ${notification.read ? "bg-background opacity-70" : "bg-muted/20"}`}>
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="space-y-1">
+                            <p className="font-medium leading-none">{notification.type === 'disease_alert' ? "Disease Alert" : "Weather Alert"}</p>
+                            <p className="text-xs text-muted-foreground">{notification.message}</p>
+                            <p className="text-[10px] text-muted-foreground">{new Date(notification.timestamp).toLocaleString()}</p>
+                          </div>
+                          {!notification.read && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleMarkAsRead(notification.id)}>
+                              <CheckCircle2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
           </Button>

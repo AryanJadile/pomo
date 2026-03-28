@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 from typing import Dict, Any, List
+from datetime import datetime
 
 # Import the Vision Agent
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -27,6 +28,9 @@ vision_agent = PomeVisionAgent()
 
 # Dummy history store
 HISTORY_DB = []
+
+# Dummy notifications store
+NOTIFICATIONS_DB = []
 
 @app.post("/api/classify")
 async def classify_fruit(image: UploadFile = File(...)):
@@ -67,6 +71,17 @@ async def submit_env_metadata(payload: EnvPayload):
     if temp_level == "High": factors.append("High Temperature")
     
     if not factors: factors.append("Optimal Conditions")
+    
+    # Trigger notification if stress factors exist
+    stress_alerts = [f for f in factors if f != "Optimal Conditions"]
+    if stress_alerts:
+        NOTIFICATIONS_DB.append({
+            "id": len(NOTIFICATIONS_DB) + 1,
+            "type": "environmental_alert",
+            "message": f"Critical Environmental Factors Detected: {', '.join(stress_alerts)}",
+            "read": False,
+            "timestamp": datetime.now().isoformat()
+        })
     
     return {
         "stress_factors": factors,
@@ -142,18 +157,40 @@ async def run_ontology_inference(payload: OntologyPayload):
     # Save to history
     HISTORY_DB.append({
         "id": len(HISTORY_DB) + 1,
-        "date": "2026-03-22",
+        "date": datetime.now().strftime("%Y-%m-%d"),
         "disease": payload.disease,
         "severity": payload.severity,
         "score": score,
         "status": "Completed"
     })
     
+    if payload.severity == "Severe":
+        NOTIFICATIONS_DB.append({
+            "id": len(NOTIFICATIONS_DB) + 1,
+            "type": "disease_alert",
+            "message": f"Severe {payload.disease.replace('_', ' ').title()} detected in recent scan. Take immediate action.",
+            "read": False,
+            "timestamp": datetime.now().isoformat()
+        })
+    
     return result
 
 @app.get("/api/history")
 async def get_history():
     return HISTORY_DB
+
+@app.get("/api/notifications")
+async def get_notifications():
+    # Return reversed so newest are first
+    return list(reversed(NOTIFICATIONS_DB))
+
+@app.put("/api/notifications/{n_id}/read")
+async def mark_notification_read(n_id: int):
+    for n in NOTIFICATIONS_DB:
+        if n["id"] == n_id:
+            n["read"] = True
+            return n
+    return {"error": "Not found"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

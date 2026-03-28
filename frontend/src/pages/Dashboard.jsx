@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react"
+import { useAppStore } from "@/store/useAppStore"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { getAnalysisHistory } from "@/services/api"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
 export default function Dashboard() {
+  const { notifications } = useAppStore()
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const activeAlerts = notifications.filter(n => !n.read).length
 
   useEffect(() => {
     async function fetchHistory() {
@@ -47,7 +51,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Active Alerts</CardTitle></CardHeader>
-          <CardContent><div className="text-3xl font-bold text-destructive">2</div></CardContent>
+          <CardContent><div className="text-3xl font-bold text-destructive">{activeAlerts}</div></CardContent>
         </Card>
       </div>
 
