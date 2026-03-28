@@ -1,6 +1,36 @@
 import { create } from 'zustand';
+import { supabase } from '@/lib/supabaseClient';
 
 export const useAppStore = create((set) => ({
+  // Auth state
+  user: null,
+  session: null,
+  profile: null,
+  setUser: (user) => set({ user }),
+  setSession: (session) => set({ session }),
+  setProfile: (profile) => set({ profile }),
+  initializeAuth: () => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      set({ session, user: session?.user ?? null });
+      if (session?.user) {
+        supabase.from('profiles').select('*').eq('id', session.user.id).single()
+          .then(({ data }) => set({ profile: data }))
+          .catch(console.error);
+      }
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      set({ session, user: session?.user ?? null });
+      if (session?.user) {
+        supabase.from('profiles').select('*').eq('id', session.user.id).single()
+          .then(({ data }) => set({ profile: data }))
+          .catch(console.error);
+      } else {
+        set({ profile: null });
+      }
+    });
+  },
+
   // Theme state
   theme: localStorage.getItem('pomeguard-theme') || 'light',
   toggleTheme: () => set((state) => {
