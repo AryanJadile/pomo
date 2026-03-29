@@ -95,7 +95,7 @@ export default function ScanDetail() {
                 <div className="text-xs text-muted-foreground uppercase mb-2">Environmental Inputs</div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-muted p-2 rounded">
-                    <div className="text-[10px] text-muted-foreground">UV (W/m²)</div>
+                    <div className="text-[10px] text-muted-foreground">Solar Rad (W/m²)</div>
                     <div className="font-medium">{input_data?.uv_irradiance || 'N/A'}</div>
                   </div>
                   <div className="bg-muted p-2 rounded">

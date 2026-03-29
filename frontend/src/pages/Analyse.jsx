@@ -41,7 +41,7 @@ export default function Analyse() {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m&timezone=auto`)
+          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,shortwave_radiation&timezone=auto`)
           const data = await res.json()
           
           if (data?.current) {
@@ -49,6 +49,7 @@ export default function Analyse() {
               ...prev,
               temperature: data.current.temperature_2m,
               humidity: data.current.relative_humidity_2m,
+              uv_irradiance: Math.round(data.current.shortwave_radiation)
             }))
           } else {
             setWeatherError("Failed to parse weather data")
@@ -212,8 +213,8 @@ export default function Analyse() {
                 {weatherError && <p className="text-destructive text-xs font-medium px-1 mt-1 -mb-2">{weatherError}</p>}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">UV (W/m²)</label>
-                    <input type="number" min="0" max="2000" required value={envParams.uv_irradiance} onChange={e => setEnvParams({...envParams, uv_irradiance: e.target.value})} className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" />
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Solar Rad (W/m²)</label>
+                    <input type="number" min="0" max="1400" required value={envParams.uv_irradiance} onChange={e => setEnvParams({...envParams, uv_irradiance: e.target.value})} className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Humidity (%)</label>
@@ -288,7 +289,7 @@ export default function Analyse() {
                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 border-b pb-2">2. Environmental Stress Profiles</h3>
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="flex flex-col border rounded-lg p-3 text-center bg-card">
-                        <span className="text-xs text-muted-foreground font-medium mb-1">UV Irradiance</span>
+                        <span className="text-xs text-muted-foreground font-medium mb-1">Solar Radiation</span>
                         <span className="font-bold text-xl text-foreground mb-2">{envParams.uv_irradiance}</span>
                         <Badge variant={envData.uv_stress_level === "High" ? "destructive" : "success"} className="mx-auto uppercase tracking-wide text-[10px] sm:w-full justify-center">{envData.uv_stress_level}</Badge>
                       </div>
