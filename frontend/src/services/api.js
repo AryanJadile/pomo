@@ -65,13 +65,17 @@ export const getScan = async (id) => {
 };
 
 export const downloadReport = async (scanId) => {
-  const response = await api.get(`/api/reports/generate?scan_id=${scanId}`, {
+  // Use the new professional Node-based reporting service
+  // Bypass the main API_BASE_URL to leverage Vite's proxy for the reporting service
+  const response = await axios.post(`/api/reports/generate`, { scanId }, {
     responseType: 'blob',
+    headers: { 'Content-Type': 'application/json' }
   });
   const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = `PomeGuard_Report_${scanId.slice(0, 8).toUpperCase()}.pdf`;
+  const date = new Date().toISOString().split('T')[0];
+  a.download = `PomeGuard_Report_${scanId.slice(0, 8).toUpperCase()}_${date}.pdf`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
