@@ -413,7 +413,7 @@ export const buildReportHtml = (scan: ScanData, profile: UserProfile): string =>
     <tr><td class="label">Fruit Analysed</td><td>Pomegranate (Punica granatum)</td></tr>
     <tr><td class="label">Analysed By</td><td>${profile.full_name}</td></tr>
     <tr><td class="label">Sample Reference</td><td>${scan.public_id || 'SCAN_' + scan.id.slice(0, 4)}</td></tr>
-    <tr><td class="label">Environmental Data</td><td>UV: ${uv} W/m² | Humidity: ${hum}% | Temp: ${temp}°C</td></tr>
+    <tr><td class="label">Environmental Data</td><td>Solar Rad: ${uv} W/m² | Humidity: ${hum}% | Temp: ${temp}°C</td></tr>
   </table>
 
   ${hasDisease ? `
@@ -449,7 +449,7 @@ export const buildReportHtml = (scan: ScanData, profile: UserProfile): string =>
         <th style="text-align: center;">Stress Level</th>
       </tr>
       <tr>
-        <td>UV Irradiance</td>
+        <td>Solar Radiation</td>
         <td>${uv} W/m²</td>
         <td>${getStressLevel('uv', uv)}</td>
       </tr>
@@ -467,7 +467,7 @@ export const buildReportHtml = (scan: ScanData, profile: UserProfile): string =>
     <p class="advisory-text">
       <em>Agro-Environmental Advisory:</em> 
       The combined interaction of recorded environmental parameters indicates ${uv > 800 || temp > 35 ? 'elevated physiological stress' : 'a stable growth micro-environment'}. 
-      ${uv > 800 ? 'High UV irradiance may trigger surface oxidative stress.' : ''}
+      ${uv > 800 ? 'High solar radiation may trigger surface oxidative stress.' : ''}
       ${hum > 70 ? 'High humidity levels increase risk of pathogenic foliar onset.' : ''}
     </p>
   </div>
