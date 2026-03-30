@@ -4,6 +4,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getAnalysisHistory } from "@/services/api"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import 'leaflet/dist/leaflet.css';
+import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 
 export default function Dashboard() {
   const { notifications } = useAppStore()
@@ -35,6 +37,22 @@ export default function Dashboard() {
     date: new Date(h.created_at).toLocaleDateString(),
     score: h.result?.nutrition?.nutritional_score || 0
   })).reverse();
+
+  // Map Data
+  const scansWithLocation = history.filter(h => h.input_data?.latitude && h.input_data?.longitude);
+  const defaultCenter = [17.6599, 75.9064]; // Solapur
+  const mapCenter = scansWithLocation.length > 0
+    ? [scansWithLocation[scansWithLocation.length - 1].input_data.latitude, scansWithLocation[scansWithLocation.length - 1].input_data.longitude]
+    : defaultCenter;
+
+  const getMarkerColor = (severity) => {
+    switch (severity) {
+      case "Severe": return "#8B1A1A"; // Dark Red
+      case "Moderate": return "#D35400"; // Orange
+      case "Mild": return "#F1C40F"; // Yellow
+      case "None": default: return "#27AE60"; // Green
+    }
+  };
 
   return (
     <div className="container py-8 space-y-8 animate-in fade-in duration-500">
@@ -90,8 +108,37 @@ export default function Dashboard() {
             <CardTitle>Farm Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg overflow-hidden border h-32 relative">
-              <div className="absolute inset-0 bg-muted flex items-center justify-center text-muted-foreground">Map View Unavailable</div>
+            <div className="rounded-lg overflow-hidden border h-48 relative z-0">
+              {loading ? (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/30">Loading Map...</div>
+              ) : (
+                <MapContainer center={mapCenter} zoom={15} style={{ height: "100%", width: "100%" }} scrollWheelZoom={false}>
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  />
+                  {scansWithLocation.map((scan) => {
+                    const disease = scan.result?.disease || "Healthy";
+                    const severity = scan.result?.severity || "None";
+                    const color = getMarkerColor(severity);
+                    return (
+                      <CircleMarker 
+                        key={scan.id} 
+                        center={[scan.input_data.latitude, scan.input_data.longitude]}
+                        radius={8}
+                        pathOptions={{ color: 'white', weight: 2, fillColor: color, fillOpacity: 0.8 }}
+                      >
+                        <Popup>
+                          <div className="font-sans">
+                            <p className="font-bold text-sm m-0">{disease.replace(/_/g, " ")}</p>
+                            <p className="text-xs m-0 text-muted-foreground">{severity} Severity</p>
+                          </div>
+                        </Popup>
+                      </CircleMarker>
+                    );
+                  })}
+                </MapContainer>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex justify-between"><span className="text-muted-foreground text-sm">Location</span><span className="font-medium text-sm">Solapur, Maharashtra</span></div>
