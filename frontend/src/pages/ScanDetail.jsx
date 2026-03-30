@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Leaf, Download, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import ChatBot from '../components/ChatBot'
 
 export default function ScanDetail() {
   const { id } = useParams()
@@ -177,6 +178,7 @@ export default function ScanDetail() {
           
         </div>
       </div>
+      <ChatBot scanId={scan.id} scanData={scan} />
     </div>
   )
 }
