@@ -20,12 +20,39 @@ export default function Analyse() {
   const [envParams, setEnvParams] = useState({ uv_irradiance: 800, humidity: 60, temperature: 25 })
   const [isSubmittingEnv, setIsSubmittingEnv] = useState(false)
   const [envData, setEnvData] = useState(null)
+  const [location, setLocation] = useState(null)
 
   const [isInferring, setIsInferring] = useState(false)
   const [nutritionData, setNutritionData] = useState(null)
 
   const [isFetchingWeather, setIsFetchingWeather] = useState(false)
   const [weatherError, setWeatherError] = useState(null)
+
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false)
+  const [locationError, setLocationError] = useState(null)
+
+  const detectLocation = () => {
+    setIsFetchingLocation(true)
+    setLocationError(null)
+
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser")
+      setIsFetchingLocation(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords
+        setLocation({ latitude, longitude })
+        setIsFetchingLocation(false)
+      },
+      (error) => {
+        setLocationError("Location access denied or unavailable.")
+        setIsFetchingLocation(false)
+      }
+    )
+  }
 
   const autoFetchWeather = () => {
     setIsFetchingWeather(true)
@@ -41,6 +68,7 @@ export default function Analyse() {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords
+          setLocation({ latitude, longitude })
           const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,shortwave_radiation&timezone=auto`)
           const data = await res.json()
           
@@ -129,7 +157,10 @@ export default function Analyse() {
         media_url: mediaInfo.url,
         public_id: mediaInfo.publicId,
         media_type: mediaInfo.mediaType,
-        input_data: envParams,
+        input_data: {
+          ...envParams,
+          ...(location ? { latitude: location.latitude, longitude: location.longitude } : {})
+        },
         result: fullResult,
         confidence_score: diseaseData.confidence
       })
@@ -203,14 +234,27 @@ export default function Analyse() {
             <CardHeader className="pb-3"><CardTitle>2. Environmental Metadata</CardTitle></CardHeader>
             <CardContent>
               <form onSubmit={handleEnvSubmit} className="space-y-5">
-                <div className="flex justify-between items-center bg-muted/40 p-2.5 rounded-lg border border-border/50">
-                  <span className="text-xs font-medium text-muted-foreground hidden sm:inline-block">Provide inputs or auto-detect location weather.</span>
-                  <Button type="button" variant="outline" size="sm" onClick={autoFetchWeather} disabled={isFetchingWeather} className="h-7 w-full sm:w-auto sm:ml-auto gap-1.5 bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary transition-all rounded-full px-3 shrink-0">
-                    {isFetchingWeather ? <RefreshCw className="h-3 w-3 animate-spin" /> : <MapPin className="h-3 w-3" />}
-                    <span className="text-[10px] font-bold uppercase tracking-wider">{isFetchingWeather ? "Detecting..." : "Auto-Detect"}</span>
-                  </Button>
+                <div className="flex flex-col gap-2 bg-muted/40 p-3 rounded-lg border border-border/50">
+                  <span className="text-xs font-medium text-muted-foreground hidden sm:block">Use sensors to fetch your environment data, or just tag your location.</span>
+                  <div className="flex gap-2 justify-end">
+                    <Button type="button" variant="outline" size="sm" onClick={detectLocation} disabled={isFetchingLocation || location} className="h-7 bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary transition-all rounded-full px-3 overflow-hidden">
+                      {isFetchingLocation ? <RefreshCw className="h-3 w-3 animate-spin mr-1.5" /> : <MapPin className="h-3 w-3 mr-1.5" />}
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{location ? "Tagged" : "Tag Location"}</span>
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={autoFetchWeather} disabled={isFetchingWeather} className="h-7 bg-primary/10 hover:bg-primary/20 border-primary/20 text-primary transition-all rounded-full px-3">
+                      {isFetchingWeather ? <RefreshCw className="h-3 w-3 animate-spin mr-1.5" /> : <RefreshCw className="h-3 w-3 mr-1.5" />}
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{isFetchingWeather ? "Fetching..." : "Fetch Weather"}</span>
+                    </Button>
+                  </div>
                 </div>
+                {location && (
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-1.5 rounded border border-emerald-100 dark:border-emerald-800/50 mt-2 mb-1">
+                    <MapPin className="h-3 w-3" />
+                    Location captured for Hotspot Map
+                  </div>
+                )}
                 {weatherError && <p className="text-destructive text-xs font-medium px-1 mt-1 -mb-2">{weatherError}</p>}
+                {locationError && <p className="text-destructive text-xs font-medium px-1 mt-1 -mb-2">{locationError}</p>}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Solar Rad (W/m²)</label>
