@@ -30,17 +30,10 @@ export default function ScanDetail() {
   }, [id])
 
   const handleDownloadReport = async () => {
-    setDownloading(true)
-    try {
-      toast.info("Generating PDF report — this may take a few seconds...")
-      await downloadReport(id)
-      toast.success("Report downloaded successfully!")
-    } catch (err) {
-      console.error(err)
-      toast.error("Failed to generate report. Please ensure the backend is running.")
-    } finally {
-      setDownloading(false)
-    }
+    toast.success("Preparing report for download...");
+    setTimeout(() => {
+      window.print();
+    }, 500);
   }
 
   if (loading) return <div className="p-10 text-center">Loading scan details...</div>
