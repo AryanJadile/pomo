@@ -342,19 +342,20 @@ async def generate_report(
     from report_template import build_report_html
     html = build_report_html(scan, profile)
 
-    # 4. Render to PDF with Playwright
+    # 4. Render to PDF with xhtml2pdf
     try:
-        from playwright.async_api import async_playwright
-        async with async_playwright() as p:
-            browser = await p.chromium.launch()
-            page = await browser.new_page()
-            await page.set_content(html, wait_until="networkidle")
-            pdf_bytes = await page.pdf(
-                format="A4",
-                print_background=True,
-                margin={"top": "0px", "bottom": "0px", "left": "0px", "right": "0px"}
-            )
-            await browser.close()
+        from xhtml2pdf import pisa
+        import io
+        result_file = io.BytesIO()
+        
+        # pisa requires a string or file-like object for source, and a custom link fetching func if needed
+        # Since HTML has images loaded from Cloudinary and fonts from Google, we allow remote fetching implicitly
+        pisa_status = pisa.CreatePDF(html, dest=result_file)
+        
+        if pisa_status.err:
+            raise Exception("Internal errors occurred during PDF rendering")
+            
+        pdf_bytes = result_file.getvalue()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
 
