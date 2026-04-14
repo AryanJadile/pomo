@@ -11,4 +11,3 @@ cloudinary
 supabase
 python-dotenv
 PyJWT
-xhtml2pdf

@@ -321,57 +321,7 @@ async def delete_scan(scan_id: str, user_id: str = Depends(get_user_id), supabas
     return {"status": "success"}
 
 
-@app.get("/api/reports/generate")
-async def generate_report(
-    scan_id: str,
-    request: Request,
-    user_id: str = Depends(get_user_id),
-    supabase: Client = Depends(get_supabase)
-):
-    # 1. Fetch the scan (RLS ensures it belongs to this user)
-    scan_res = supabase.table("scans").select("*").eq("id", scan_id).execute()
-    if not scan_res.data:
-        raise HTTPException(status_code=404, detail="Scan not found")
-    scan = scan_res.data[0]
-
-    # 2. Fetch the user's profile for their full name
-    profile_res = supabase.table("profiles").select("*").eq("id", user_id).execute()
-    profile = profile_res.data[0] if profile_res.data else {}
-
-    # 3. Build the report HTML
-    from report_template import build_report_html
-    html = build_report_html(scan, profile)
-
-    # 4. Render to PDF with xhtml2pdf
-    try:
-        from xhtml2pdf import pisa
-        import io
-        result_file = io.BytesIO()
-        
-        # pisa requires a string or file-like object for source, and a custom link fetching func if needed
-        # Since HTML has images loaded from Cloudinary and fonts from Google, we allow remote fetching implicitly
-        pisa_status = pisa.CreatePDF(html, dest=result_file)
-        
-        if pisa_status.err:
-            raise Exception("Internal errors occurred during PDF rendering")
-            
-        pdf_bytes = result_file.getvalue()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
-
-    # 5. Return as downloadable PDF
-    report_id = f"PG-{scan_id[:8].upper()}"
-    date_slug = datetime.now().strftime("%Y%m%d")
-    filename = f"PomeGuard_Report_{report_id}_{date_slug}.pdf"
-
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
-            "Content-Type": "application/pdf"
-        }
-    )
+# Obsolete PDF generation endpoint removed. Note: frontend relies on the Node.js /reports service via POST.
 
 
 from api.routers.chat import router as chat_router
