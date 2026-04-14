@@ -3,8 +3,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import json
 
-from api.utils.gemini import build_system_prompt, stream_chat_message
-from api.utils.firebase_admin import get_or_create_session, save_message, get_session_messages
+from utils.gemini import build_system_prompt, stream_chat_message
+from utils.firebase_admin import get_or_create_session, save_message, get_session_messages
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -14,11 +14,11 @@ class ChatMessageRequest(BaseModel):
     user_id: str
 
 def get_auth_dep(request: Request):
-    from api import main
+    import main
     return main.get_user_id(request)
 
 def get_db_dep(request: Request):
-    from api import main
+    import main
     return main.get_supabase(request)
 
 @router.post("/message")

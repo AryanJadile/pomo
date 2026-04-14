@@ -50,8 +50,7 @@ def get_user_id(request: Request) -> str:
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Token decode failed: {e}")
 
-# Import the Vision Agent
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Import the Vision Agent natively (now that it lives inside the api directory)
 from agents.vision_agent import PomeVisionAgent
 
 app = FastAPI(title="PomeGuard API", description="LangGraph Orchestration for Pomegranate Health Mapping")
@@ -324,7 +323,7 @@ async def delete_scan(scan_id: str, user_id: str = Depends(get_user_id), supabas
 # Obsolete PDF generation endpoint removed. Note: frontend relies on the Node.js /reports service via POST.
 
 
-from api.routers.chat import router as chat_router
+from routers.chat import router as chat_router
 app.include_router(chat_router)
 
 if __name__ == "__main__":
