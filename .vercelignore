@@ -1,0 +1,9 @@
+node_modules
+frontend/node_modules
+reports/node_modules
+Pomegranate Diseases Dataset
+archive
+data
+ontology
+*.pdf
+*.tex
