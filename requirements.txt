@@ -7,3 +7,8 @@ numpy
 pillow
 google-generativeai>=0.8.0
 firebase-admin>=6.5.0
+cloudinary
+supabase
+python-dotenv
+PyJWT
+playwright
