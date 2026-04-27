@@ -1,7 +1,7 @@
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { UploadCloud, CheckCircle2, Download, RefreshCw, Leaf, MapPin } from "lucide-react"
+import { UploadCloud, CheckCircle2, Download, RefreshCw, Leaf, MapPin, Camera, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,11 @@ export default function Analyse() {
   const [preview, setPreview] = useState(null)
   const [mediaInfo, setMediaInfo] = useState(null)
   const navigate = useNavigate()
+  
+  const [isCameraActive, setIsCameraActive] = useState(false)
+  const [cameraError, setCameraError] = useState(null)
+  const videoRef = useRef(null)
+  const canvasRef = useRef(null)
   
   const [isClassifying, setIsClassifying] = useState(false)
   const [diseaseData, setDiseaseData] = useState(null)
@@ -95,6 +100,71 @@ export default function Analyse() {
       }
     )
   }
+
+  const startCamera = async () => {
+    setIsCameraActive(true)
+    setCameraError(null)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      })
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (err) {
+      setCameraError("Camera access denied or unavailable.")
+      console.error(err)
+    }
+  }
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      videoRef.current.srcObject.getTracks().forEach(track => track.stop())
+      videoRef.current.srcObject = null
+    }
+    setIsCameraActive(false)
+  }
+
+  const capturePhoto = async () => {
+    if (!videoRef.current || !canvasRef.current) return
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      const file = new File([blob], `capture-${Date.now()}.jpg`, { type: 'image/jpeg' })
+      
+      stopCamera()
+      setImageFile(file)
+      setPreview(URL.createObjectURL(file))
+      
+      setIsClassifying(true)
+      try {
+        const uploadRes = await uploadMedia(file)
+        setMediaInfo(uploadRes)
+        
+        const result = await classifyFruit(file)
+        setDiseaseData(result)
+      } catch (err) {
+        console.error(err)
+        toast.error("Failed to process or upload image.")
+      } finally {
+        setIsClassifying(false)
+      }
+    }, 'image/jpeg', 0.9)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        videoRef.current.srcObject.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [])
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0]
@@ -201,32 +271,64 @@ export default function Analyse() {
           <Card className="shadow-sm border-border">
             <CardHeader className="pb-3"><CardTitle>1. Visual Upload</CardTitle></CardHeader>
             <CardContent>
-              <label className={`relative overflow-hidden flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${preview ? 'border-primary/50 bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50'}`}>
-                <input type="file" className="hidden" accept="image/jpeg, image/png, image/webp" onChange={handleImageUpload} />
-                {preview ? (
-                  <div className="flex flex-col items-center space-y-4">
-                    <img src={preview} alt="Preview" className="h-32 w-32 object-cover rounded-lg shadow-sm" />
-                    <div className="text-sm font-medium text-center">
-                      <p className="text-foreground max-w-[200px] truncate">{imageFile?.name}</p>
-                      <p className="text-muted-foreground">{(imageFile?.size / 1024 / 1024).toFixed(2)} MB</p>
+              {isCameraActive ? (
+                <div className="relative overflow-hidden flex flex-col items-center justify-center p-4 border-2 border-primary/50 bg-primary/5 rounded-xl">
+                  {cameraError ? (
+                    <div className="text-center p-4">
+                      <p className="text-destructive mb-4">{cameraError}</p>
+                      <Button variant="outline" onClick={stopCamera}>Cancel</Button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="p-4 bg-background rounded-full text-primary border shadow-sm"><UploadCloud className="h-8 w-8" /></div>
-                    <div>
-                      <p className="font-semibold text-foreground">Drag your fruit image here</p>
-                      <p className="text-sm text-muted-foreground pt-1">or click to browse (JPG, PNG, WEBP)</p>
+                  ) : (
+                    <div className="flex flex-col items-center w-full space-y-4">
+                      <div className="relative w-full max-w-sm aspect-[3/4] sm:aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover"></video>
+                        <canvas ref={canvasRef} className="hidden"></canvas>
+                      </div>
+                      <div className="flex gap-4">
+                        <Button variant="outline" onClick={stopCamera}>
+                          <X className="h-4 w-4 mr-2" /> Cancel
+                        </Button>
+                        <Button onClick={capturePhoto}>
+                          <Camera className="h-4 w-4 mr-2" /> Capture Photo
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-                {isClassifying && (
-                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl z-10 transition-all">
-                    <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
-                    <p className="text-sm font-medium animate-pulse text-foreground">Classifying disease...</p>
-                  </div>
-                )}
-              </label>
+                  )}
+                </div>
+              ) : (
+                <label className={`relative overflow-hidden flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${preview ? 'border-primary/50 bg-primary/5' : 'border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50'}`}>
+                  <input type="file" className="hidden" accept="image/jpeg, image/png, image/webp" onChange={handleImageUpload} />
+                  {preview ? (
+                    <div className="flex flex-col items-center space-y-4">
+                      <img src={preview} alt="Preview" className="h-32 w-32 object-cover rounded-lg shadow-sm" />
+                      <div className="text-sm font-medium text-center">
+                        <p className="text-foreground max-w-[200px] truncate">{imageFile?.name}</p>
+                        <p className="text-muted-foreground">{(imageFile?.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <Button type="button" variant="outline" size="sm" onClick={(e) => { e.preventDefault(); startCamera(); }} className="mt-2 text-xs z-10 relative">
+                        <Camera className="h-3 w-3 mr-1.5" /> Retake Photo
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center text-center space-y-4">
+                      <div className="p-4 bg-background rounded-full text-primary border shadow-sm"><UploadCloud className="h-8 w-8" /></div>
+                      <div>
+                        <p className="font-semibold text-foreground">Drag your fruit image here</p>
+                        <p className="text-sm text-muted-foreground pt-1 mb-4">or click to browse (JPG, PNG, WEBP)</p>
+                        <Button type="button" variant="secondary" onClick={(e) => { e.preventDefault(); startCamera(); }} className="mt-2 z-10 relative">
+                          <Camera className="h-4 w-4 mr-2" /> Use Camera
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {isClassifying && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-xl z-10 transition-all">
+                      <RefreshCw className="h-8 w-8 animate-spin text-primary mb-3" />
+                      <p className="text-sm font-medium animate-pulse text-foreground">Classifying disease...</p>
+                    </div>
+                  )}
+                </label>
+              )}
             </CardContent>
           </Card>
 

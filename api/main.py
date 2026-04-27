@@ -110,6 +110,15 @@ async def classify_fruit(image: UploadFile = File(...)):
         tmp.write(await image.read())
         temp_img_path = tmp.name
         
+    # Verify that the image is actually a pomegranate
+    from utils.gemini import verify_image_is_pomegranate
+    is_pome = verify_image_is_pomegranate(temp_img_path)
+    
+    if not is_pome:
+        if os.path.exists(temp_img_path):
+            os.remove(temp_img_path)
+        raise HTTPException(status_code=400, detail="The image does not appear to be a pomegranate. Please try again with a valid image.")
+        
     disease_label = vision_agent.predict(temp_img_path)
     
     if os.path.exists(temp_img_path):

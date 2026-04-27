@@ -106,3 +106,22 @@ async def stream_chat_message(system_prompt: str, history: list, user_message: s
         text = chunk.text
         if text:
             yield text
+
+def verify_image_is_pomegranate(image_path: str) -> bool:
+    """Uses Gemini Vision to check if the uploaded image actually contains a pomegranate fruit/plant/leaf."""
+    try:
+        model = genai.GenerativeModel("gemini-3-flash-preview")
+        import PIL.Image
+        img = PIL.Image.open(image_path)
+        prompt = "Look at this image very carefully. Does this image clearly show a pomegranate fruit, pomegranate plant, or pomegranate leaf? Answer strictly with a single word: YES or NO."
+        response = model.generate_content([prompt, img])
+        text = response.text.strip().upper()
+        # If it says YES, or if we can't get a clear NO (to be safe and not block edge cases)
+        if "YES" in text:
+            return True
+        elif "NO" in text:
+            return False
+        return True # Fallback
+    except Exception as e:
+        print(f"Gemini verification failed: {e}")
+        return True # Fallback to true if API fails so we don't break the app
