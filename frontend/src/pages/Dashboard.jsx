@@ -7,10 +7,17 @@ import { Badge } from "@/components/ui/badge"
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 
+import { Edit2, Check } from "lucide-react"
+
 export default function Dashboard() {
   const { notifications } = useAppStore()
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
+  
+  const [locationName, setLocationName] = useState("Fetching location...")
+  const [farmArea, setFarmArea] = useState(() => localStorage.getItem('pomo_farm_area') || 12)
+  const [isEditingArea, setIsEditingArea] = useState(false)
+  const [tempArea, setTempArea] = useState(farmArea)
 
   const activeAlerts = notifications.filter(n => !n.read).length
 
@@ -54,6 +61,27 @@ export default function Dashboard() {
     }
   };
 
+  useEffect(() => {
+    async function fetchLocationName() {
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
+        const data = await response.json();
+        const city = data.address.city || data.address.town || data.address.village || data.address.county || "Unknown Location";
+        const state = data.address.state || "";
+        setLocationName(`${city}${state ? `, ${state}` : ''}`);
+      } catch (error) {
+        setLocationName(`${mapCenter[0].toFixed(2)}°N, ${mapCenter[1].toFixed(2)}°E`);
+      }
+    }
+    fetchLocationName();
+  }, [mapCenter[0], mapCenter[1]]);
+
+  const handleSaveArea = () => {
+    setFarmArea(tempArea);
+    localStorage.setItem('pomo_farm_area', tempArea);
+    setIsEditingArea(false);
+  };
+
   return (
     <div className="container py-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -89,7 +117,7 @@ export default function Dashboard() {
               {loading ? (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">Loading chart...</div>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                   <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
@@ -123,7 +151,7 @@ export default function Dashboard() {
                     const color = getMarkerColor(severity);
                     return (
                       <CircleMarker 
-                        key={scan.id} 
+                        key={scan.id || `marker-${Math.random()}`} 
                         center={[scan.input_data.latitude, scan.input_data.longitude]}
                         radius={8}
                         pathOptions={{ color: 'white', weight: 2, fillColor: color, fillOpacity: 0.8 }}
@@ -141,9 +169,27 @@ export default function Dashboard() {
               )}
             </div>
             <div className="space-y-2">
-              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Location</span><span className="font-medium text-sm">Solapur, Maharashtra</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Location</span><span className="font-medium text-sm text-right max-w-[200px] truncate" title={locationName}>{locationName}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground text-sm">Cultivar</span><span className="font-medium text-sm">Bhagwa</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground text-sm">Total Area</span><span className="font-medium text-sm">12 Acres</span></div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground text-sm">Total Area</span>
+                {isEditingArea ? (
+                  <div className="flex items-center gap-1">
+                    <input 
+                      type="number" 
+                      className="h-6 w-16 text-sm border rounded px-1 bg-background" 
+                      value={tempArea} 
+                      onChange={e => setTempArea(e.target.value)} 
+                    />
+                    <button onClick={handleSaveArea} className="text-primary hover:bg-primary/10 p-1 rounded"><Check className="h-4 w-4" /></button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{farmArea} Acres</span>
+                    <button onClick={() => setIsEditingArea(true)} className="text-muted-foreground hover:text-primary"><Edit2 className="h-3.5 w-3.5" /></button>
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -173,7 +219,7 @@ export default function Dashboard() {
                   const date = new Date(item.created_at).toLocaleDateString();
                   
                   return (
-                    <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                    <tr key={item.id || `hist-${Math.random()}`} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">{date}</td>
                       <td className="px-4 py-3 font-medium text-foreground">{disease.replace(/_/g, " ")}</td>
                       <td className="px-4 py-3">

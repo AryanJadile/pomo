@@ -34,7 +34,8 @@ class PomeVisionAgent:
             return "Error: ONNX model not loaded"
 
         try:
-            image = Image.open(image_path).convert('RGB')
+            with Image.open(image_path) as img:
+                image = img.convert('RGB')
             input_tensor = self.preprocess(image)
             
             outputs = self.session.run(None, {self.input_name: input_tensor})

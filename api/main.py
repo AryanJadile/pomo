@@ -335,5 +335,11 @@ async def delete_scan(scan_id: str, user_id: str = Depends(get_user_id), supabas
 from routers.chat import router as chat_router
 app.include_router(chat_router)
 
+from routers.calculators import router as calculators_router
+app.include_router(calculators_router)
+
+from routers.whatsapp import router as whatsapp_router
+app.include_router(whatsapp_router)
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

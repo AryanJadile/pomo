@@ -77,6 +77,7 @@ export default function Navbar() {
 
   const authLinks = [
     { name: "Analyse", path: "/analyse" },
+    { name: "Farm Tools", path: "/tools" },
     { name: "Dashboard", path: "/dashboard" },
     { name: "History", path: "/history" },
   ]
@@ -129,7 +130,7 @@ export default function Navbar() {
                       <div className="p-4 text-center text-sm text-muted-foreground">No notifications yet</div>
                     ) : (
                       notifications.map(notification => (
-                        <div key={notification.id} className={`p-4 border-b text-sm transition-colors ${notification.read ? "bg-background opacity-70" : "bg-muted/20"}`}>
+                        <div key={notification.id || `notif-${Math.random()}`} className={`p-4 border-b text-sm transition-colors ${notification.read ? "bg-background opacity-70" : "bg-muted/20"}`}>
                           <div className="flex justify-between items-start gap-2">
                             <div className="space-y-1">
                               <p className="font-medium leading-none">{notification.type === 'disease_alert' ? "Disease Alert" : "Weather Alert"}</p>

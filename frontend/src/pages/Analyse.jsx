@@ -407,7 +407,7 @@ export default function Analyse() {
               <AnimatePresence>
                 {/* Card 1: Disease */}
                 {diseaseData && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-5 border rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
+                  <motion.div key="disease-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-5 border rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 border-b pb-2">1. Visual Disease Detection</h3>
                     <div className="flex items-center gap-6">
                       <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border bg-muted">
@@ -431,7 +431,7 @@ export default function Analyse() {
 
                 {/* Card 2: Env */}
                 {envData && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-5 border rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
+                  <motion.div key="env-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-5 border rounded-xl bg-background shadow-sm hover:shadow-md transition-shadow">
                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-4 border-b pb-2">2. Environmental Stress Profiles</h3>
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div className="flex flex-col border rounded-lg p-3 text-center bg-card">
@@ -458,7 +458,7 @@ export default function Analyse() {
 
                 {/* Card 3: Scorecard */}
                 {nutritionData && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="p-6 border rounded-xl bg-background shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] flex flex-col sm:flex-row gap-8 items-center border-primary/20 relative overflow-hidden">
+                  <motion.div key="scorecard-card" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="p-6 border rounded-xl bg-background shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] flex flex-col sm:flex-row gap-8 items-center border-primary/20 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl pointer-events-none"></div>
                     <div className="flex flex-col items-center shrink-0">
                       <div className="relative w-36 h-36 flex items-center justify-center">
@@ -504,7 +504,7 @@ export default function Analyse() {
 
                 {/* Card 4: Advisory */}
                 {nutritionData && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="px-6 py-5 border rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 shadow-sm flex gap-4 mt-6 print:bg-white print:border-gray-300 print:text-black">
+                  <motion.div key="advisory-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }} className="px-6 py-5 border rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 shadow-sm flex gap-4 mt-6 print:bg-white print:border-gray-300 print:text-black">
                     <Leaf className="h-6 w-6 text-emerald-600 shrink-0 mt-0.5" />
                     <div className="space-y-2 text-foreground">
                       <h3 className="text-sm font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-widest">Agronomic Advisory</h3>

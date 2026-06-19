@@ -112,9 +112,9 @@ def verify_image_is_pomegranate(image_path: str) -> bool:
     try:
         model = genai.GenerativeModel("gemini-3-flash-preview")
         import PIL.Image
-        img = PIL.Image.open(image_path)
-        prompt = "Look at this image very carefully. Does this image clearly show a pomegranate fruit, pomegranate plant, or pomegranate leaf? Answer strictly with a single word: YES or NO."
-        response = model.generate_content([prompt, img])
+        with PIL.Image.open(image_path) as img:
+            prompt = "Look at this image very carefully. Does this image clearly show a pomegranate fruit, pomegranate plant, or pomegranate leaf? Answer strictly with a single word: YES or NO."
+            response = model.generate_content([prompt, img])
         text = response.text.strip().upper()
         # If it says YES, or if we can't get a clear NO (to be safe and not block edge cases)
         if "YES" in text:

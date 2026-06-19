@@ -13,7 +13,7 @@ export const useAppStore = create((set) => ({
     supabase.auth.getSession().then(({ data: { session } }) => {
       set({ session, user: session?.user ?? null });
       if (session?.user) {
-        supabase.from('profiles').select('*').eq('id', session.user.id).single()
+        supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle()
           .then(({ data }) => set({ profile: data }))
           .catch(console.error);
       }
@@ -22,7 +22,7 @@ export const useAppStore = create((set) => ({
     supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null });
       if (session?.user) {
-        supabase.from('profiles').select('*').eq('id', session.user.id).single()
+        supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle()
           .then(({ data }) => set({ profile: data }))
           .catch(console.error);
       } else {

@@ -9,6 +9,7 @@ import Login from "./pages/Login"
 import Signup from "./pages/Signup"
 import History from "./pages/History"
 import ScanDetail from "./pages/ScanDetail"
+import FarmTools from "./pages/FarmTools"
 import { useAppStore } from "@/store/useAppStore"
 import { Toaster } from "sonner"
 
@@ -47,6 +48,7 @@ function App() {
           <Route path="analyse" element={<ProtectedRoute><Analyse /></ProtectedRoute>} />
           <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+          <Route path="tools" element={<ProtectedRoute><FarmTools /></ProtectedRoute>} />
           <Route path="scan/:id" element={<ProtectedRoute><ScanDetail /></ProtectedRoute>} />
         </Route>
       </Routes>

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { supabase } from '@/lib/supabaseClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -89,5 +89,10 @@ export const getNotifications = async () => {
 
 export const markNotificationAsRead = async (id) => {
   const response = await api.put(`/api/notifications/${id}/read`);
+  return response.data;
+};
+
+export const getTreatments = async () => {
+  const response = await api.get('/api/calculators/treatments');
   return response.data;
 };
